@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RentCar System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --secondary: #16213e;
+      --accent: #e94560;
+      --accent2: #f5a623;
+      --card: #0f3460;
+      --text: #eaeaea;
+      --text-muted: #8892a4;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --info: #3498db;
+      --border: rgba(255,255,255,0.08);
+      --glass: rgba(15,52,96,0.6);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--primary);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+    /* Auth */
+    .auth-bg {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .auth-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(233,69,96,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(245,166,35,0.08) 0%, transparent 50%);
+    }
+    .auth-card {
+      background: rgba(15,52,96,0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 420px;
+      position: relative; z-index: 1;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+      animation: slideUp 0.5s ease;
+    }
+    @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:none; } }
+    .auth-logo { text-align: center; margin-bottom: 32px; }
+    .auth-logo .logo-icon {
+      width: 64px; height: 64px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 16px; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 28px; margin-bottom: 12px;
+    }
+    .auth-logo h1 { font-family: 'Kanit', sans-serif; font-size: 28px; font-weight: 700; color: #fff; }
+    .auth-logo p { color: var(--text-muted); font-size: 14px; }
+    .auth-tabs { display: flex; gap: 4px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+    .auth-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted);
+      border-radius: 8px; cursor: pointer; font-size: 14px; font-family: 'Sarabun',sans-serif; transition: all 0.2s; }
+    .auth-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+    .form-control {
+      width: 100%; padding: 12px 16px; background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 15px; font-family: 'Sarabun',sans-serif;
+      transition: all 0.2s; outline: none;
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(233,69,96,0.15); }
+    .form-control option { background: var(--secondary); }
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer;
+      font-size: 15px; font-weight: 600; font-family: 'Sarabun',sans-serif; transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #c0392b); color: #fff; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(233,69,96,0.35); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .alert-error { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; }
+    .alert-success { background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3); color: #2ecc71; }
+
+    /* Layout */
+    .app-layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; background: var(--secondary); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; position: fixed; top:0; left:0; height: 100vh;
+      z-index: 100; transition: all 0.3s;
+    }
+    .sidebar-logo {
+      padding: 24px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sidebar-logo .logo-box {
+      width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+    }
+    .sidebar-logo span { font-family: 'Kanit',sans-serif; font-size: 18px; font-weight: 700; }
+    .sidebar-menu { padding: 16px 12px; flex: 1; overflow-y: auto; }
+    .menu-section { margin-bottom: 24px; }
+    .menu-section-title { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1.5px; padding: 0 8px; margin-bottom: 8px; font-weight: 600; }
+    .menu-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px;
+      cursor: pointer; color: var(--text-muted); font-size: 14px; font-weight: 500;
+      transition: all 0.2s; margin-bottom: 2px; text-decoration: none;
+    }
+    .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .menu-item.active { background: rgba(233,69,96,0.15); color: var(--accent); }
+    .menu-item .menu-icon { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+    .sidebar-footer {
+      padding: 16px 12px; border-top: 1px solid var(--border);
+    }
+    .user-info {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 8px;
+    }
+    .user-avatar {
+      width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .user-email { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-role { font-size: 10px; text-transform: uppercase; color: var(--accent); font-weight: 600; letter-spacing: 0.5px; }
+    .btn-logout {
+      width: 100%; padding: 10px; background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.2);
+      color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 13px; font-family: 'Sarabun',sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(231,76,60,0.2); }
+
+    /* Main content */
+    .main-content { margin-left: 260px; flex: 1; min-height: 100vh; }
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(26,26,46,0.9); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-title { font-family: 'Kanit',sans-serif; font-size: 22px; font-weight: 600; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); }
+    .page-body { padding: 28px; }
+
+    /* Cards */
+    .card {
+      background: var(--glass); backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: 16px; padding: 24px;
+    }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px; display: flex; align-items: center; gap: 16px;
+      transition: transform 0.2s; animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .stat-value { font-family: 'Kanit',sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase;
+      color: var(--text-muted); letter-spacing: 0.8px; font-weight: 600;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    tbody td { padding: 14px 16px; font-size: 14px; }
+    .td-muted { color: var(--text-muted); font-size: 13px; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+    .badge-success { background: rgba(46,204,113,0.15); color: var(--success); border: 1px solid rgba(46,204,113,0.2); }
+    .badge-warning { background: rgba(243,156,18,0.15); color: var(--warning); border: 1px solid rgba(243,156,18,0.2); }
+    .badge-danger { background: rgba(231,76,60,0.15); color: var(--danger); border: 1px solid rgba(231,76,60,0.2); }
+    .badge-info { background: rgba(52,152,219,0.15); color: var(--info); border: 1px solid rgba(52,152,219,0.2); }
+    .badge-muted { background: rgba(255,255,255,0.07); color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* Buttons inline */
+    .btn-sm {
+      padding: 6px 14px; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 500; font-family: 'Sarabun',sans-serif; transition: all 0.2s;
+    }
+    .btn-edit { background: rgba(52,152,219,0.15); color: var(--info); border: 1px solid rgba(52,152,219,0.2); }
+    .btn-edit:hover { background: rgba(52,152,219,0.3); }
+    .btn-delete { background: rgba(231,76,60,0.12); color: var(--danger); border: 1px solid rgba(231,76,60,0.2); }
+    .btn-delete:hover { background: rgba(231,76,60,0.25); }
+    .btn-view { background: rgba(46,204,113,0.12); color: var(--success); border: 1px solid rgba(46,204,113,0.2); }
+    .btn-view:hover { background: rgba(46,204,113,0.25); }
+    .btn-add {
+      padding: 10px 20px; background: linear-gradient(135deg, var(--accent), #c0392b); color: #fff;
+      border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;
+      font-family: 'Sarabun',sans-serif; transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(233,69,96,0.3); }
+    .btn-cancel {
+      padding: 12px 24px; background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+      color: var(--text); border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500;
+      font-family: 'Sarabun',sans-serif;
+    }
+    .btn-submit {
+      padding: 12px 28px; background: linear-gradient(135deg, var(--accent), #c0392b); color: #fff;
+      border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;
+      font-family: 'Sarabun',sans-serif; transition: all 0.2s;
+    }
+    .btn-submit:hover { box-shadow: 0 6px 15px rgba(233,69,96,0.3); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px;
+      animation: fadeOverlay 0.2s ease;
+    }
+    @keyframes fadeOverlay { from { opacity:0; } to { opacity:1; } }
+    .modal {
+      background: var(--secondary); border: 1px solid var(--border); border-radius: 18px;
+      width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(-20px); } to { opacity:1; transform:none; } }
+    .modal-lg { max-width: 700px; }
+    .modal-header { padding: 24px 28px 0; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-family: 'Kanit',sans-serif; font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 22px; padding: 4px; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 24px 28px; }
+    .modal-footer { padding: 0 28px 24px; display: flex; justify-content: flex-end; gap: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* Car grid */
+    .cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .car-card {
+      background: var(--glass); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s; animation: fadeIn 0.4s ease;
+    }
+    .car-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+    .car-img {
+      height: 160px; background: linear-gradient(135deg, var(--card), var(--secondary));
+      display: flex; align-items: center; justify-content: center; font-size: 60px; position: relative;
+    }
+    .car-img img { width: 100%; height: 100%; object-fit: cover; }
+    .car-status-badge { position: absolute; top: 12px; right: 12px; }
+    .car-body { padding: 18px; }
+    .car-brand { font-family: 'Kanit',sans-serif; font-size: 17px; font-weight: 600; }
+    .car-model { font-size: 13px; color: var(--text-muted); }
+    .car-price { font-size: 20px; font-weight: 700; color: var(--accent2); margin: 12px 0; }
+    .car-price span { font-size: 13px; color: var(--text-muted); font-weight: 400; }
+    .car-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+    .car-actions { display: flex; gap: 8px; }
+
+    /* Detail view */
+    .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { width: 140px; color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
+    .detail-value { font-size: 14px; font-weight: 500; }
+
+    /* Dashboard chart placeholder */
+    .chart-placeholder {
+      height: 200px; background: rgba(0,0,0,0.15); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px;
+    }
+
+    /* Topbar actions */
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: gap; }
+
+    /* Loading */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); flex-direction: column; gap: 16px; }
+    .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+    .empty p { font-size: 14px; }
+
+    /* Toast */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 14px 18px; border-radius: 10px; font-size: 14px; max-width: 320px;
+      animation: toastIn 0.3s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      display: flex; align-items: center; gap: 10px;
+    }
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:none; } }
+    .toast-success { background: #1a3d2b; border: 1px solid rgba(46,204,113,0.3); color: #2ecc71; }
+    .toast-error { background: #3d1a1a; border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; }
+    .toast-info { background: #1a2d3d; border: 1px solid rgba(52,152,219,0.3); color: #3498db; }
+
+    /* Profile */
+    .profile-header {
+      background: linear-gradient(135deg, var(--card), var(--secondary));
+      border-radius: 16px; padding: 32px; display: flex; align-items: center; gap: 24px; margin-bottom: 24px;
+    }
+    .profile-avatar {
+      width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 700; flex-shrink: 0;
+    }
+    .profile-name { font-family: 'Kanit',sans-serif; font-size: 24px; font-weight: 600; }
+    .profile-email { color: var(--text-muted); font-size: 14px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main-content { margin-left: 0; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    }
+
+    /* Tabs */
+    .tab-bar { display: flex; gap: 4px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 4px; margin-bottom: 24px; width: fit-content; }
+    .tab-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); border-radius: 8px; cursor: pointer; font-size: 14px; font-family: 'Sarabun',sans-serif; transition: all 0.2s; }
+    .tab-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+    /* Rental timeline */
+    .timeline { position: relative; padding-left: 20px; }
+    .timeline::before { content:''; position:absolute; left:6px; top:8px; bottom:8px; width:2px; background: var(--border); }
+    .timeline-item { position: relative; margin-bottom: 20px; }
+    .timeline-dot {
+      position: absolute; left: -18px; top: 4px;
+      width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--card);
+    }
+    .timeline-content { font-size: 13px; }
+    .timeline-date { color: var(--text-muted); font-size: 12px; }
+
+    /* Chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { padding: 4px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-muted); }
+
+    /* Search */
+    .search-bar {
+      position: relative; flex: 1; max-width: 320px;
+    }
+    .search-bar input {
+      width: 100%; padding: 9px 14px 9px 38px; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'Sarabun',sans-serif; outline: none;
+    }
+    .search-bar input:focus { border-color: rgba(233,69,96,0.4); }
+    .search-bar .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    const API = 'http://localhost:5000/api';
+
+    // ─── TOAST ───────────────────────────────────────
+    function useToast() {
+      const [toasts, setToasts] = useState([]);
+      const add = (msg, type='info') => {
+        const id = Date.now();
+        setToasts(t => [...t, { id, msg, type }]);
+        setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
+      };
+      return { toasts, success: m => add(m,'success'), error: m => add(m,'error'), info: m => add(m,'info') };
+    }
+    function ToastContainer({ toasts }) {
+      const icons = { success: '✓', error: '✕', info: 'ℹ' };
+      return (
+        <div className="toast-container">
+          {toasts.map(t => <div key={t.id} className={`toast toast-${t.type}`}><span>{icons[t.type]}</span>{t.msg}</div>)}
+        </div>
+      );
+    }
+
+    // ─── AUTH ─────────────────────────────────────────
+    function AuthPage({ onLogin }) {
+      const [tab, setTab] = useState('login');
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [msg, setMsg] = useState(null);
+
+      const handleSubmit = async () => {
+        setMsg(null); setLoading(true);
+        try {
+          const res = await fetch(`${API}/${tab}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) { setMsg({ type: 'error', text: data.message }); return; }
+          if (tab === 'login') {
+            localStorage.setItem('token', data.token);
+            onLogin(data.token);
+          } else {
+            setMsg({ type: 'success', text: 'สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ' });
+            setTab('login');
+          }
+        } catch { setMsg({ type: 'error', text: 'ไม่สามารถเชื่อมต่อ Server ได้' }); }
+        finally { setLoading(false); }
+      };
+
+      return (
+        <div className="auth-bg">
+          <div className="auth-card">
+            <div className="auth-logo">
+              <div className="logo-icon">🚗</div>
+              <h1>RentCar</h1>
+              <p>ระบบจัดการเช่ารถยนต์</p>
+            </div>
+            <div className="auth-tabs">
+              <button className={`auth-tab ${tab==='login'?'active':''}`} onClick={()=>setTab('login')}>เข้าสู่ระบบ</button>
+              <button className={`auth-tab ${tab==='register'?'active':''}`} onClick={()=>setTab('register')}>สมัครสมาชิก</button>
+            </div>
+            {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
+            <div className="form-group">
+              <label>อีเมล</label>
+              <input className="form-control" type="email" placeholder="example@email.com" value={email} onChange={e=>setEmail(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>รหัสผ่าน</label>
+              <input className="form-control" type="password" placeholder="รหัสผ่าน" value={password} onChange={e=>setPassword(e.target.value)}
+                onKeyDown={e=>e.key==='Enter'&&handleSubmit()} />
+            </div>
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'กำลังดำเนินการ...' : tab==='login' ? '🔑 เข้าสู่ระบบ' : '✨ สมัครสมาชิก'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── HELPERS ─────────────────────────────────────
+    function parseJwt(token) {
+      try { return JSON.parse(atob(token.split('.')[1])); } catch { return null; }
+    }
+    function apiFetch(path, opts={}) {
+      const token = localStorage.getItem('token');
+      return fetch(`${API}${path}`, {
+        ...opts,
+        headers: { 'Authorization': `Bearer ${token}`, ...(opts.headers||{}) }
+      });
+    }
+    function fmtDate(d) {
+      if (!d) return '-';
+      return new Date(d).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'numeric' });
+    }
+    function fmtMoney(n) { return Number(n).toLocaleString('th-TH', { minimumFractionDigits:2 }); }
+    function carStatusBadge(s) {
+      const m = { AVAILABLE: ['badge-success','ว่าง'], RENTED: ['badge-danger','เช่าแล้ว'], MAINTENANCE: ['badge-warning','ซ่อมบำรุง'] };
+      const [cls, txt] = m[s] || ['badge-muted', s];
+      return <span className={`badge ${cls}`}>{txt}</span>;
+    }
+    function rentStatusBadge(s) {
+      const m = { pending: ['badge-warning','รอดำเนินการ'], active: ['badge-info','กำลังเช่า'], returned: ['badge-success','คืนแล้ว'], cancelled: ['badge-muted','ยกเลิก'] };
+      const [cls, txt] = m[s] || ['badge-muted', s];
+      return <span className={`badge ${cls}`}>{txt}</span>;
+    }
+    function Loading() { return <div className="loading"><div className="spinner"/><span>กำลังโหลด...</span></div>; }
+
+    // ─── MODAL ───────────────────────────────────────
+    function Modal({ title, onClose, children, footer, lg }) {
+      return (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+          <div className={`modal${lg?' modal-lg':''}`}>
+            <div className="modal-header">
+              <h3>{title}</h3>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            <div className="modal-body">{children}</div>
+            {footer && <div className="modal-footer">{footer}</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── ADMIN DASHBOARD ─────────────────────────────
+    function AdminDashboard({ toast }) {
+      const [stats, setStats] = useState({ cars: 0, customers: 0, rentals: 0, revenue: 0, available: 0, rented: 0 });
+      const [recentRentals, setRecentRentals] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        Promise.all([
+          apiFetch('/car').then(r=>r.json()),
+          apiFetch('/customer').then(r=>r.json()),
+          apiFetch('/rentals').then(r=>r.json()),
+          apiFetch('/payments').then(r=>r.json()),
+        ]).then(([cars, customers, rentals, payments]) => {
+          const revenue = payments.reduce((s,p)=>s+Number(p.pay_amount),0);
+          setStats({
+            cars: cars.length,
+            available: cars.filter(c=>c.car_status==='AVAILABLE').length,
+            rented: cars.filter(c=>c.car_status==='RENTED').length,
+            customers: Array.isArray(customers) ? customers.length : 0,
+            rentals: rentals.length,
+            revenue
+          });
+          setRecentRentals(rentals.slice(0,5));
+        }).catch(() => toast.error('โหลดข้อมูล Dashboard ไม่สำเร็จ'))
+          .finally(() => setLoading(false));
+      }, []);
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(233,69,96,0.15)'}}>🚗</div>
+              <div><div className="stat-value">{stats.cars}</div><div className="stat-label">รถทั้งหมด</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(46,204,113,0.15)'}}>✅</div>
+              <div><div className="stat-value" style={{color:'var(--success)'}}>{stats.available}</div><div className="stat-label">รถว่าง</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(52,152,219,0.15)'}}>👥</div>
+              <div><div className="stat-value">{stats.customers}</div><div className="stat-label">ลูกค้า</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(245,166,35,0.15)'}}>💰</div>
+              <div><div className="stat-value" style={{color:'var(--accent2)',fontSize:'20px'}}>฿{fmtMoney(stats.revenue)}</div><div className="stat-label">รายได้รวม</div></div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-title">การเช่าล่าสุด</div>
+            <div className="table-wrap">
+              <table>
+                <thead><tr>
+                  <th>รหัส</th><th>ทะเบียน</th><th>ลูกค้า</th><th>วันเช่า</th><th>กำหนดคืน</th><th>ราคา</th><th>สถานะ</th>
+                </tr></thead>
+                <tbody>
+                  {recentRentals.map(r => (
+                    <tr key={r.rent_id}>
+                      <td className="td-muted">#{r.rent_id}</td>
+                      <td><strong>{r.plate_id}</strong></td>
+                      <td>{r.customer?.cust_fname} {r.customer?.cust_lname}</td>
+                      <td>{fmtDate(r.rent_date)}</td>
+                      <td>{fmtDate(r.return_due_date)}</td>
+                      <td style={{color:'var(--accent2)'}}>฿{fmtMoney(r.total_price)}</td>
+                      <td>{rentStatusBadge(r.rent_status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {recentRentals.length===0&&<div className="empty"><div className="empty-icon">📋</div><p>ยังไม่มีข้อมูลการเช่า</p></div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── ADMIN CARS ──────────────────────────────────
+    function AdminCars({ toast }) {
+      const [cars, setCars] = useState([]);
+      const [types, setTypes] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [modal, setModal] = useState(null);
+      const [selected, setSelected] = useState(null);
+      const [search, setSearch] = useState('');
+      const [form, setForm] = useState({ plate_id:'', brand:'', model:'', color:'', mileage:'', price_per_day:'', deposit:'', car_status:'AVAILABLE', detail:'', type_id:'' });
+      const [imageFile, setImageFile] = useState(null);     // File object
+      const [imagePreview, setImagePreview] = useState(null); // local blob URL
+      const [saving, setSaving] = useState(false);
+
+      const load = () => {
+        setLoading(true);
+        Promise.all([apiFetch('/car').then(r=>r.json()), apiFetch('/car_type').then(r=>r.json())])
+          .then(([c,t]) => { setCars(c); setTypes(t); })
+          .catch(() => toast.error('โหลดข้อมูลรถไม่สำเร็จ'))
+          .finally(() => setLoading(false));
+      };
+      useEffect(load, []);
+
+      const resetImage = () => { setImageFile(null); setImagePreview(null); };
+
+      const openAdd = () => {
+        setForm({ plate_id:'', brand:'', model:'', color:'', mileage:'', price_per_day:'', deposit:'', car_status:'AVAILABLE', detail:'', type_id: types[0]?.type_id||'' });
+        resetImage(); setModal('add');
+      };
+      const openEdit = car => {
+        setSelected(car);
+        setForm({ ...car, type_id: car.type_id });
+        resetImage(); setModal('edit');
+      };
+      const openView = car => { setSelected(car); setModal('view'); };
+
+      const handleImageChange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      };
+
+      // รูปรถ: ถ้ามี preview ใช้ preview, ถ้าไม่มีใช้จาก server
+      const carImgSrc = (car_image) =>
+        car_image ? `http://localhost:5000/car_img/${car_image}` : null;
+
+      const save = async () => {
+        setSaving(true);
+        try {
+          const fd = new FormData();
+          // ใส่ทุก field ยกเว้น field ที่ไม่ต้องการ
+          const fields = ['plate_id','brand','model','color','mileage','price_per_day','deposit','car_status','detail','type_id'];
+          fields.forEach(k => { if (form[k] !== undefined && form[k] !== null) fd.append(k, form[k]); });
+          // ถ้าเลือกรูปใหม่ให้แนบ
+          if (imageFile) fd.append('car_image', imageFile);
+
+          const isEdit = modal === 'edit';
+          const res = await apiFetch(isEdit ? `/car/${selected.plate_id}` : '/car', { method: isEdit ? 'PUT' : 'POST', body: fd });
+          if (!res.ok) { const d = await res.json(); toast.error(d.message || 'เกิดข้อผิดพลาด'); return; }
+          toast.success(isEdit ? 'แก้ไขข้อมูลรถสำเร็จ' : 'เพิ่มรถสำเร็จ');
+          setModal(null); resetImage(); load();
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      const remove = async (plate_id) => {
+        if (!confirm('ยืนยันการลบรถคันนี้?')) return;
+        const res = await apiFetch(`/car/${plate_id}`, { method:'DELETE' });
+        if (res.ok) { toast.success('ลบรถสำเร็จ'); load(); }
+        else toast.error('ไม่สามารถลบรถได้');
+      };
+
+      const filtered = cars.filter(c =>
+        c.brand.toLowerCase().includes(search.toLowerCase()) ||
+        c.model.toLowerCase().includes(search.toLowerCase()) ||
+        c.plate_id.includes(search)
+      );
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,gap:12,flexWrap:'wrap'}}>
+            <div className="search-bar">
+              <span className="search-icon">🔍</span>
+              <input placeholder="ค้นหา ยี่ห้อ, รุ่น, ทะเบียน..." value={search} onChange={e=>setSearch(e.target.value)} />
+            </div>
+            <button className="btn-add" onClick={openAdd}>+ เพิ่มรถ</button>
+          </div>
+
+          {filtered.length === 0 ? <div className="empty"><div className="empty-icon">🚗</div><h3>ไม่พบข้อมูลรถ</h3></div> :
+            <div className="cars-grid">
+              {filtered.map(car => (
+                <div key={car.plate_id} className="car-card">
+                  <div className="car-img">
+                    {carImgSrc(car.car_image)
+                      ? <img src={carImgSrc(car.car_image)} alt={car.brand} onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />
+                      : null}
+                    <span style={{display: carImgSrc(car.car_image) ? 'none' : 'flex', fontSize:60, alignItems:'center', justifyContent:'center', width:'100%', height:'100%'}}>🚘</span>
+                    <div className="car-status-badge">{carStatusBadge(car.car_status)}</div>
+                  </div>
+                  <div className="car-body">
+                    <div className="car-brand">{car.brand} {car.model}</div>
+                    <div className="car-model">ทะเบียน: {car.plate_id} · {car.color}</div>
+                    <div className="car-price">฿{fmtMoney(car.price_per_day)}<span>/วัน</span></div>
+                    <div className="car-meta">
+                      <span>🏷 {car.type?.type_name}</span>
+                      <span>📍 {Number(car.mileage).toLocaleString()} กม.</span>
+                    </div>
+                    <div className="car-actions">
+                      <button className="btn-sm btn-view" style={{flex:1}} onClick={()=>openView(car)}>ดูรายละเอียด</button>
+                      <button className="btn-sm btn-edit" onClick={()=>openEdit(car)}>✏</button>
+                      <button className="btn-sm btn-delete" onClick={()=>remove(car.plate_id)}>🗑</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+
+          {/* View Modal */}
+          {modal==='view' && selected && (
+            <Modal title="รายละเอียดรถ" onClose={()=>setModal(null)}>
+              <div className="car-img" style={{height:200,borderRadius:12,marginBottom:20,overflow:'hidden'}}>
+                {carImgSrc(selected.car_image)
+                  ? <img src={carImgSrc(selected.car_image)} alt={selected.brand} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:12}}
+                      onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />
+                  : null}
+                <span style={{display: carImgSrc(selected.car_image) ? 'none' : 'flex', fontSize:60, alignItems:'center', justifyContent:'center', width:'100%', height:'100%'}}>🚘</span>
+              </div>
+              {[['ทะเบียน',selected.plate_id],['ยี่ห้อ',selected.brand],['รุ่น',selected.model],
+                ['สี',selected.color],['ระยะทาง',`${Number(selected.mileage).toLocaleString()} กม.`],
+                ['ค่าเช่า/วัน',`฿${fmtMoney(selected.price_per_day)}`],['มัดจำ',`฿${fmtMoney(selected.deposit)}`],
+                ['ประเภท',selected.type?.type_name],['สถานะ',carStatusBadge(selected.car_status)],
+                ['รายละเอียด',selected.detail||'-']
+              ].map(([l,v])=>(
+                <div key={l} className="detail-row"><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>
+              ))}
+            </Modal>
+          )}
+
+          {/* Add/Edit Modal */}
+          {(modal==='add' || modal==='edit') && (
+            <Modal title={modal==='add' ? 'เพิ่มรถใหม่' : 'แก้ไขข้อมูลรถ'} onClose={()=>{setModal(null);resetImage();}} lg
+              footer={<><button className="btn-cancel" onClick={()=>{setModal(null);resetImage();}}>ยกเลิก</button><button className="btn-submit" onClick={save} disabled={saving}>{saving?'กำลังบันทึก...':'💾 บันทึก'}</button></>}>
+
+              {/* ── Image Upload Zone ── */}
+              <div className="form-group">
+                <label>รูปภาพรถ</label>
+                <div style={{
+                  border: '2px dashed rgba(255,255,255,0.15)', borderRadius:12, padding:16,
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:12,
+                  background:'rgba(0,0,0,0.15)', cursor:'pointer', transition:'border-color 0.2s',
+                  position:'relative'
+                }}
+                  onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--accent)';}}
+                  onDragLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.15)';}}
+                  onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor='rgba(255,255,255,0.15)';const f=e.dataTransfer.files[0];if(f){setImageFile(f);setImagePreview(URL.createObjectURL(f));}}}
+                >
+                  {/* Preview */}
+                  {(imagePreview || (modal==='edit' && selected?.car_image && !imagePreview)) ? (
+                    <div style={{position:'relative',width:'100%',maxHeight:180,overflow:'hidden',borderRadius:8}}>
+                      <img
+                        src={imagePreview || carImgSrc(selected?.car_image)}
+                        alt="preview"
+                        style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:8,display:'block'}}
+                      />
+                      <button onClick={e=>{e.stopPropagation();resetImage();}} style={{
+                        position:'absolute',top:6,right:6,background:'rgba(231,76,60,0.85)',border:'none',
+                        color:'#fff',borderRadius:'50%',width:26,height:26,cursor:'pointer',fontSize:14,lineHeight:'26px',textAlign:'center'
+                      }}>×</button>
+                    </div>
+                  ) : (
+                    <div style={{textAlign:'center',padding:'12px 0',color:'var(--text-muted)'}}>
+                      <div style={{fontSize:36,marginBottom:8}}>📷</div>
+                      <div style={{fontSize:14,fontWeight:500}}>คลิกหรือลากไฟล์มาวางที่นี่</div>
+                      <div style={{fontSize:12,marginTop:4}}>PNG, JPG, WEBP (ขนาดไม่เกิน 5MB)</div>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*"
+                    style={{position:'absolute',inset:0,opacity:0,cursor:'pointer',width:'100%',height:'100%'}}
+                    onChange={handleImageChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ทะเบียนรถ *</label>
+                  <input className="form-control" value={form.plate_id} onChange={e=>setForm({...form,plate_id:e.target.value})} disabled={modal==='edit'} placeholder="เช่น กข1234" />
+                </div>
+                <div className="form-group">
+                  <label>ประเภทรถ *</label>
+                  <select className="form-control" value={form.type_id} onChange={e=>setForm({...form,type_id:e.target.value})}>
+                    {types.map(t=><option key={t.type_id} value={t.type_id}>{t.type_name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ยี่ห้อ *</label>
+                  <input className="form-control" value={form.brand} onChange={e=>setForm({...form,brand:e.target.value})} placeholder="Honda, Toyota..." />
+                </div>
+                <div className="form-group">
+                  <label>รุ่น *</label>
+                  <input className="form-control" value={form.model} onChange={e=>setForm({...form,model:e.target.value})} placeholder="Civic, Camry..." />
+                </div>
+              </div>
+              <div className="form-row-3">
+                <div className="form-group">
+                  <label>สี</label>
+                  <input className="form-control" value={form.color} onChange={e=>setForm({...form,color:e.target.value})} placeholder="สีรถ" />
+                </div>
+                <div className="form-group">
+                  <label>ระยะทาง (กม.)</label>
+                  <input className="form-control" type="number" value={form.mileage} onChange={e=>setForm({...form,mileage:e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>สถานะ</label>
+                  <select className="form-control" value={form.car_status} onChange={e=>setForm({...form,car_status:e.target.value})}>
+                    <option value="AVAILABLE">ว่าง</option>
+                    <option value="RENTED">เช่าแล้ว</option>
+                    <option value="MAINTENANCE">ซ่อมบำรุง</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ค่าเช่า/วัน (บาท)</label>
+                  <input className="form-control" type="number" value={form.price_per_day} onChange={e=>setForm({...form,price_per_day:e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>มัดจำ (บาท)</label>
+                  <input className="form-control" type="number" value={form.deposit} onChange={e=>setForm({...form,deposit:e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>รายละเอียดเพิ่มเติม</label>
+                <input className="form-control" value={form.detail||''} onChange={e=>setForm({...form,detail:e.target.value})} placeholder="หมายเหตุ..." />
+              </div>
+            </Modal>
+          )}
+        </div>
+      );
+    }
+
+    // ─── ADMIN CAR TYPES ─────────────────────────────
+    function AdminCarTypes({ toast }) {
+      const [types, setTypes] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [modal, setModal] = useState(false);
+      const [editing, setEditing] = useState(null);
+      const [name, setName] = useState('');
+      const [saving, setSaving] = useState(false);
+
+      const load = () => {
+        apiFetch('/car_type').then(r=>r.json()).then(setTypes).catch(()=>toast.error('โหลดไม่สำเร็จ')).finally(()=>setLoading(false));
+      };
+      useEffect(load, []);
+
+      const openAdd = () => { setEditing(null); setName(''); setModal(true); };
+      const openEdit = t => { setEditing(t); setName(t.type_name); setModal(true); };
+
+      const save = async () => {
+        setSaving(true);
+        try {
+          const res = await apiFetch(editing ? `/car_type/${editing.type_id}` : '/car_type', {
+            method: editing?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type_name: name })
+          });
+          if (!res.ok) { toast.error('เกิดข้อผิดพลาด'); return; }
+          toast.success(editing?'แก้ไขสำเร็จ':'เพิ่มประเภทสำเร็จ');
+          setModal(false); load();
+        } finally { setSaving(false); }
+      };
+
+      const remove = async id => {
+        if (!confirm('ยืนยันลบประเภทนี้?')) return;
+        const res = await apiFetch(`/car_type/${id}`, { method:'DELETE' });
+        if (res.ok) { toast.success('ลบสำเร็จ'); load(); }
+        else toast.error('ไม่สามารถลบได้ (อาจมีรถที่ใช้ประเภทนี้อยู่)');
+      };
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:16}}>
+            <button className="btn-add" onClick={openAdd}>+ เพิ่มประเภทรถ</button>
+          </div>
+          <div className="card">
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>ชื่อประเภท</th><th>จัดการ</th></tr></thead>
+                <tbody>
+                  {types.map(t => (
+                    <tr key={t.type_id}>
+                      <td className="td-muted">{t.type_id}</td>
+                      <td><strong>{t.type_name}</strong></td>
+                      <td style={{display:'flex',gap:8}}>
+                        <button className="btn-sm btn-edit" onClick={()=>openEdit(t)}>✏ แก้ไข</button>
+                        <button className="btn-sm btn-delete" onClick={()=>remove(t.type_id)}>🗑 ลบ</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {types.length===0&&<div className="empty"><div className="empty-icon">🏷</div><p>ยังไม่มีประเภทรถ</p></div>}
+            </div>
+          </div>
+          {modal && (
+            <Modal title={editing?'แก้ไขประเภทรถ':'เพิ่มประเภทรถ'} onClose={()=>setModal(false)}
+              footer={<><button className="btn-cancel" onClick={()=>setModal(false)}>ยกเลิก</button><button className="btn-submit" onClick={save} disabled={saving}>{saving?'กำลังบันทึก...':'บันทึก'}</button></>}>
+              <div className="form-group">
+                <label>ชื่อประเภทรถ</label>
+                <input className="form-control" value={name} onChange={e=>setName(e.target.value)} placeholder="SEDAN, SUV, HATCHBACK..." />
+              </div>
+            </Modal>
+          )}
+        </div>
+      );
+    }
+
+    // ─── ADMIN CUSTOMERS ─────────────────────────────
+    function AdminCustomers({ toast }) {
+      const [customers, setCustomers] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [search, setSearch] = useState('');
+      const [editModal, setEditModal] = useState(false);
+      const [selected, setSelected] = useState(null);
+      const [form, setForm] = useState({ cust_fname:'', cust_lname:'', cust_tel:'', license_num:'' });
+      const [saving, setSaving] = useState(false);
+
+      const load = () => {
+        setLoading(true);
+        apiFetch('/customer').then(r=>r.json()).then(setCustomers).catch(()=>toast.error('โหลดไม่สำเร็จ')).finally(()=>setLoading(false));
+      };
+      useEffect(load, []);
+
+      const openEdit = c => {
+        setSelected(c);
+        setForm({ cust_fname: c.cust_fname, cust_lname: c.cust_lname, cust_tel: c.cust_tel, license_num: c.license_num });
+        setEditModal(true);
+      };
+
+      const save = async () => {
+        if (!form.cust_fname || !form.cust_lname || !form.cust_tel || !form.license_num) {
+          toast.error('กรุณากรอกข้อมูลให้ครบ'); return;
+        }
+        setSaving(true);
+        try {
+          const res = await apiFetch(`/customer/${selected.cust_id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form)
+          });
+          if (!res.ok) { const d = await res.json(); toast.error(d.message || 'เกิดข้อผิดพลาด'); return; }
+          toast.success('แก้ไขข้อมูลลูกค้าสำเร็จ');
+          setEditModal(false); load();
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      const remove = async id => {
+        if (!confirm('ยืนยันลบลูกค้านี้?')) return;
+        const res = await apiFetch(`/customer/${id}`, { method:'DELETE' });
+        if (res.ok) { toast.success('ลบสำเร็จ'); load(); }
+        else { const d=await res.json(); toast.error(d.message||'ไม่สามารถลบได้'); }
+      };
+
+      const filtered = customers.filter(c =>
+        `${c.cust_fname} ${c.cust_lname} ${c.cust_tel}`.toLowerCase().includes(search.toLowerCase())
+      );
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,gap:12,flexWrap:'wrap'}}>
+            <div className="search-bar">
+              <span className="search-icon">🔍</span>
+              <input placeholder="ค้นหาชื่อ, เบอร์โทร..." value={search} onChange={e=>setSearch(e.target.value)} />
+            </div>
+            <span className="badge badge-info" style={{padding:'8px 16px',fontSize:13}}>ลูกค้าทั้งหมด {customers.length} คน</span>
+          </div>
+          <div className="card">
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>ชื่อ-นามสกุล</th><th>เบอร์โทร</th><th>เลขใบขับขี่</th><th>Email</th><th>วันที่สมัคร</th><th>จัดการ</th></tr></thead>
+                <tbody>
+                  {filtered.map(c => (
+                    <tr key={c.cust_id}>
+                      <td className="td-muted">{c.cust_id}</td>
+                      <td>
+                        <div style={{display:'flex',alignItems:'center',gap:10}}>
+                          <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,var(--accent),var(--accent2))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>
+                            {c.cust_fname?.charAt(0).toUpperCase()}
+                          </div>
+                          <strong>{c.cust_fname} {c.cust_lname}</strong>
+                        </div>
+                      </td>
+                      <td>{c.cust_tel}</td>
+                      <td className="td-muted">{c.license_num}</td>
+                      <td className="td-muted">{c.user?.email}</td>
+                      <td className="td-muted">{fmtDate(c.create_at)}</td>
+                      <td>
+                        <div style={{display:'flex',gap:6}}>
+                          <button className="btn-sm btn-edit" onClick={()=>openEdit(c)}>✏ แก้ไข</button>
+                          <button className="btn-sm btn-delete" onClick={()=>remove(c.cust_id)}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filtered.length===0&&<div className="empty"><div className="empty-icon">👥</div><h3>ไม่พบลูกค้า</h3></div>}
+            </div>
+          </div>
+
+          {/* Edit Customer Modal */}
+          {editModal && selected && (
+            <Modal title={`แก้ไขข้อมูล: ${selected.cust_fname} ${selected.cust_lname}`} onClose={()=>setEditModal(false)}
+              footer={<><button className="btn-cancel" onClick={()=>setEditModal(false)}>ยกเลิก</button><button className="btn-submit" onClick={save} disabled={saving}>{saving?'กำลังบันทึก...':'💾 บันทึก'}</button></>}>
+              {/* Customer info header */}
+              <div style={{background:'rgba(0,0,0,0.15)',borderRadius:12,padding:14,marginBottom:20,display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:44,height:44,borderRadius:'50%',background:'linear-gradient(135deg,var(--accent),var(--accent2))',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:18,flexShrink:0}}>
+                  {selected.cust_fname?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{fontWeight:600}}>{selected.cust_fname} {selected.cust_lname}</div>
+                  <div style={{fontSize:12,color:'var(--text-muted)'}}>{selected.user?.email} · สมัครเมื่อ {fmtDate(selected.create_at)}</div>
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>ชื่อ *</label>
+                  <input className="form-control" value={form.cust_fname} onChange={e=>setForm({...form,cust_fname:e.target.value})} placeholder="ชื่อ" />
+                </div>
+                <div className="form-group">
+                  <label>นามสกุล *</label>
+                  <input className="form-control" value={form.cust_lname} onChange={e=>setForm({...form,cust_lname:e.target.value})} placeholder="นามสกุล" />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>เบอร์โทรศัพท์ *</label>
+                  <input className="form-control" value={form.cust_tel} onChange={e=>setForm({...form,cust_tel:e.target.value})} placeholder="0xxxxxxxxx" />
+                </div>
+                <div className="form-group">
+                  <label>เลขใบขับขี่ *</label>
+                  <input className="form-control" value={form.license_num} onChange={e=>setForm({...form,license_num:e.target.value})} placeholder="เลขใบขับขี่" />
+                </div>
+              </div>
+            </Modal>
+          )}
+        </div>
+      );
+    }
+
+    // ─── ADMIN RENTALS ───────────────────────────────
+    function AdminRentals({ toast }) {
+      const [rentals, setRentals] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [selected, setSelected] = useState(null);
+      const [editModal, setEditModal] = useState(false);
+      const [form, setForm] = useState({});
+      const [saving, setSaving] = useState(false);
+
+      const load = () => {
+        setLoading(true);
+        apiFetch('/rentals').then(r=>r.json()).then(setRentals).catch(()=>toast.error('โหลดไม่สำเร็จ')).finally(()=>setLoading(false));
+      };
+      useEffect(load, []);
+
+      const openEdit = r => {
+        setSelected(r);
+        setForm({ car_id: r.plate_id, cust_id: r.cust_id, rent_date: r.rent_date?.slice(0,10), return_due_date: r.return_due_date?.slice(0,10), actual_return_date: r.actual_return_date?.slice(0,10)||'', pickup_place: r.pickup_place, rent_status: r.rent_status });
+        setEditModal(true);
+      };
+
+      const save = async () => {
+        setSaving(true);
+        try {
+          const res = await apiFetch(`/rental/${selected.rent_id}`, {
+            method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form)
+          });
+          if (!res.ok) { const d=await res.json(); toast.error(d.message||'เกิดข้อผิดพลาด'); return; }
+          toast.success('อัปเดตการเช่าสำเร็จ');
+          setEditModal(false); load();
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      const remove = async id => {
+        if (!confirm('ยืนยันลบข้อมูลการเช่านี้?')) return;
+        const res = await apiFetch(`/rental/${id}`, { method:'DELETE' });
+        if (res.ok) { toast.success('ลบสำเร็จ'); load(); }
+        else { const d=await res.json(); toast.error(d.message||'ไม่สามารถลบได้'); }
+      };
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div className="card">
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>ทะเบียน</th><th>ลูกค้า</th><th>วันเช่า</th><th>กำหนดคืน</th><th>สถานที่รับ</th><th>ราคา</th><th>ค่าปรับ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                <tbody>
+                  {rentals.map(r => (
+                    <tr key={r.rent_id}>
+                      <td className="td-muted">#{r.rent_id}</td>
+                      <td><strong>{r.plate_id}</strong><br/><span className="td-muted">{r.car?.brand} {r.car?.model}</span></td>
+                      <td>{r.customer?.cust_fname} {r.customer?.cust_lname}</td>
+                      <td>{fmtDate(r.rent_date)}</td>
+                      <td>{fmtDate(r.return_due_date)}</td>
+                      <td className="td-muted">{r.pickup_place}</td>
+                      <td style={{color:'var(--accent2)'}}>฿{fmtMoney(r.total_price)}</td>
+                      <td style={{color: r.fine>0?'var(--danger)':'var(--text-muted)'}}>{r.fine>0?`฿${r.fine}`:'-'}</td>
+                      <td>{rentStatusBadge(r.rent_status)}</td>
+                      <td style={{display:'flex',gap:6}}>
+                        <button className="btn-sm btn-edit" onClick={()=>openEdit(r)}>✏</button>
+                        <button className="btn-sm btn-delete" onClick={()=>remove(r.rent_id)}>🗑</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rentals.length===0&&<div className="empty"><div className="empty-icon">📋</div><h3>ไม่มีข้อมูลการเช่า</h3></div>}
+            </div>
+          </div>
+
+          {editModal && selected && (
+            <Modal title={`แก้ไขการเช่า #${selected.rent_id}`} onClose={()=>setEditModal(false)} lg
+              footer={<><button className="btn-cancel" onClick={()=>setEditModal(false)}>ยกเลิก</button><button className="btn-submit" onClick={save} disabled={saving}>{saving?'กำลังบันทึก...':'บันทึก'}</button></>}>
+              <div className="form-row">
+                <div className="form-group"><label>วันเช่า</label><input type="date" className="form-control" value={form.rent_date} onChange={e=>setForm({...form,rent_date:e.target.value})} /></div>
+                <div className="form-group"><label>กำหนดคืน</label><input type="date" className="form-control" value={form.return_due_date} onChange={e=>setForm({...form,return_due_date:e.target.value})} /></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label>วันคืนจริง</label><input type="date" className="form-control" value={form.actual_return_date} onChange={e=>setForm({...form,actual_return_date:e.target.value})} /></div>
+                <div className="form-group">
+                  <label>สถานะ</label>
+                  <select className="form-control" value={form.rent_status} onChange={e=>setForm({...form,rent_status:e.target.value})}>
+                    <option value="pending">รอดำเนินการ</option>
+                    <option value="active">กำลังเช่า</option>
+                    <option value="returned">คืนแล้ว</option>
+                    <option value="cancelled">ยกเลิก</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group"><label>สถานที่รับรถ</label><input className="form-control" value={form.pickup_place} onChange={e=>setForm({...form,pickup_place:e.target.value})} /></div>
+            </Modal>
+          )}
+        </div>
+      );
+    }
+
+    // ─── ADMIN PAYMENTS ──────────────────────────────
+    function AdminPayments({ toast }) {
+      const [payments, setPayments] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      const load = () => {
+        apiFetch('/payments').then(r=>r.json()).then(setPayments).catch(()=>toast.error('โหลดไม่สำเร็จ')).finally(()=>setLoading(false));
+      };
+      useEffect(load, []);
+
+      const remove = async id => {
+        if (!confirm('ยืนยันลบการชำระเงินนี้?')) return;
+        const res = await apiFetch(`/payment/${id}`, { method:'DELETE' });
+        if (res.ok) { toast.success('ลบสำเร็จ'); load(); }
+        else toast.error('ไม่สามารถลบได้');
+      };
+
+      const channelLabel = { cash:'เงินสด', transfer:'โอนเงิน', credit_card:'บัตรเครดิต' };
+      const typeLabel = { deposit:'มัดจำ', rental_fee:'ค่าเช่า', late_fine:'ค่าปรับล่าช้า', damage_fine:'ค่าเสียหาย' };
+
+      const total = payments.reduce((s,p)=>s+Number(p.pay_amount),0);
+
+      if (loading) return <Loading />;
+
+      return (
+        <div>
+          <div className="stats-grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))'}}>
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(245,166,35,0.15)'}}>💳</div>
+              <div><div className="stat-value" style={{color:'var(--accent2)',fontSize:'18px'}}>฿{fmtMoney(total)}</div><div className="stat-label">รายได้รวม</div></div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon" style={{background:'rgba(52,152,219,0.15)'}}>📄</div>
+              <div><div className="stat-value">{payments.length}</div><div className="stat-label">รายการทั้งหมด</div></div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>รหัสการเช่า</th><th>ช่องทาง</th><th>ประเภท</th><th>จำนวนเงิน</th><th>วันที่</th><th>จัดการ</th></tr></thead>
+                <tbody>
+                  {payments.map(p => (
+                    <tr key={p.pay_id}>
+                      <td className="td-muted">{p.pay_id}</td>
+                      <td>#{p.rent_id}</td>
+                      <td><span className="badge badge-info">{channelLabel[p.pay_channel]||p.pay_channel}</span></td>
+                      <td><span className="badge badge-muted">{typeLabel[p.pay_type]||p.pay_type}</span></td>
+                      <td style={{color:'var(--accent2)',fontWeight:600}}>฿{fmtMoney(p.pay_amount)}</td>
+                      <td className="td-muted">{fmtDate(p.pay_date)}</td>
+                      <td><button className="btn-sm btn-delete" onClick={()=>remove(p.pay_id)}>🗑</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {payments.length===0&&<div className="empty"><div className="empty-icon">💳</div><p>ไม่มีรายการชำระเงิน</p></div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── PAYMENT PAGE (full page after booking) ──────
+    function PaymentPage({ rental, car, onPaid, onCancel }) {
+      const [payChannel, setPayChannel] = useState('transfer');
+      const [saving, setSaving] = useState(false);
+      const [cancelling, setCancelling] = useState(false);
+      const [confirmCancel, setConfirmCancel] = useState(false);
+
+      const pay = async () => {
+        setSaving(true);
+        try {
+          const res = await apiFetch('/payment', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rent_id: rental.rent_id, pay_channel: payChannel })
+          });
+          const d = await res.json();
+          if (!res.ok) { alert(d.message || 'ชำระเงินไม่สำเร็จ'); return; }
+          onPaid();
+        } catch { alert('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      const cancelRental = async () => {
+        setCancelling(true);
+        try {
+          const res = await apiFetch(`/rental/${rental.rent_id}`, { method: 'DELETE' });
+          if (!res.ok) { const d = await res.json(); alert(d.message || 'ยกเลิกไม่สำเร็จ'); return; }
+          onCancel();
+        } catch { alert('เกิดข้อผิดพลาด'); }
+        finally { setCancelling(false); }
+      };
+
+      const days = Math.ceil((new Date(rental.return_due_date) - new Date(rental.rent_date)) / (1000*60*60*24));
+      const rental_price = Number(rental.total_price) - Number(rental.deposit);
+      const channelInfo = { transfer: { icon:'🏦', label:'โอนเงิน', desc:'ชำระค่าเช่าเต็มจำนวน ฿' + fmtMoney(rental.total_price) },
+        credit_card: { icon:'💳', label:'บัตรเครดิต', desc:'ชำระค่าเช่าเต็มจำนวน ฿' + fmtMoney(rental.total_price) },
+        cash: { icon:'💵', label:'เงินสด', desc:'ชำระมัดจำ ฿' + fmtMoney(rental.deposit) + ' ก่อน แล้วจากนั้นชำระที่เหลือที่จุดรับรถ' } };
+
+      return (
+        <div style={{maxWidth:600,margin:'0 auto',animation:'fadeIn 0.4s ease'}}>
+          {/* Header */}
+          <div style={{textAlign:'center',padding:'24px 0 20px'}}>
+            <div style={{width:72,height:72,background:'linear-gradient(135deg,rgba(245,166,35,0.2),rgba(233,69,96,0.15))',border:'2px solid rgba(245,166,35,0.3)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,margin:'0 auto 16px'}}>💳</div>
+            <h2 style={{fontFamily:'Kanit',fontSize:22,fontWeight:700,marginBottom:6}}>ชำระเงินเพื่อยืนยันการจอง</h2>
+            <p style={{color:'var(--text-muted)',fontSize:14}}>กรุณาชำระเงินเพื่อยืนยัน</p>
+          </div>
+
+          {/* Booking summary */}
+          <div className="card" style={{marginBottom:16}}>
+            <div style={{display:'flex',gap:16,alignItems:'center',marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--border)'}}>
+              <div style={{width:64,height:64,borderRadius:12,background:'linear-gradient(135deg,var(--card),var(--secondary))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,flexShrink:0,overflow:'hidden'}}>
+                {car?.car_image
+                  ? <img src={`http://localhost:5000/car_img/${car.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
+                  : '🚘'}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:'Kanit',fontSize:16,fontWeight:600}}>{car?.brand} {car?.model}</div>
+                <div style={{fontSize:13,color:'var(--text-muted)'}}>ทะเบียน: {rental.plate_id} · {car?.color}</div>
+                <div style={{fontSize:13,color:'var(--text-muted)',marginTop:2}}>📍 รับรถที่: {rental.pickup_place}</div>
+              </div>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+              {[['📅 วันเช่า',fmtDate(rental.rent_date)],['📅 วันคืน',fmtDate(rental.return_due_date)],
+                ['⏱ จำนวนวัน',`${days} วัน`],['🚗 ค่าเช่า',`฿${fmtMoney(rental_price)}`]].map(([l,v])=>(
+                <div key={l} style={{background:'rgba(0,0,0,0.15)',borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:3}}>{l}</div>
+                  <div style={{fontWeight:600,fontSize:14}}>{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Price breakdown */}
+            <div style={{background:'rgba(245,166,35,0.06)',border:'1px solid rgba(245,166,35,0.15)',borderRadius:10,padding:'14px 16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:8}}>
+                <span style={{color:'var(--text-muted)'}}>ค่าเช่า ({days} วัน × ฿{fmtMoney(rental_price/days)})</span>
+                <span>฿{fmtMoney(rental_price)}</span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:10}}>
+                <span style={{color:'var(--text-muted)'}}>เงินมัดจำ</span>
+                <span>฿{fmtMoney(rental.deposit)}</span>
+              </div>
+              <div style={{borderTop:'1px solid rgba(245,166,35,0.2)',paddingTop:10,display:'flex',justifyContent:'space-between',fontWeight:700,fontSize:17}}>
+                <span>ยอดรวมทั้งหมด</span>
+                <span style={{color:'var(--accent2)'}}>฿{fmtMoney(rental.total_price)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment method */}
+          <div className="card" style={{marginBottom:20}}>
+            <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>เลือกช่องทางชำระเงิน</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {Object.entries(channelInfo).map(([val, info]) => (
+                <div key={val} onClick={()=>setPayChannel(val)} style={{
+                  border: `2px solid ${payChannel===val ? 'var(--accent)' : 'var(--border)'}`,
+                  borderRadius: 12, padding:'14px 16px', cursor:'pointer',
+                  background: payChannel===val ? 'rgba(233,69,96,0.08)' : 'rgba(0,0,0,0.1)',
+                  transition:'all 0.2s', display:'flex', alignItems:'center', gap:14
+                }}>
+                  <div style={{width:40,height:40,borderRadius:10,background:payChannel===val?'rgba(233,69,96,0.15)':'rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{info.icon}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:14,color:payChannel===val?'var(--text)':'var(--text-muted)'}}>{info.label}</div>
+                    <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>{info.desc}</div>
+                  </div>
+                  <div style={{width:20,height:20,borderRadius:'50%',border:`2px solid ${payChannel===val?'var(--accent)':'var(--border)'}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                    {payChannel===val && <div style={{width:10,height:10,borderRadius:'50%',background:'var(--accent)'}} />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{display:'flex',gap:12}}>
+            <button onClick={()=>setConfirmCancel(true)} style={{
+              flex:1, padding:'14px', border:'1px solid rgba(231,76,60,0.3)', borderRadius:12,
+              background:'rgba(231,76,60,0.08)', color:'var(--danger)', cursor:'pointer',
+              fontSize:15, fontWeight:600, fontFamily:'Sarabun,sans-serif', transition:'all 0.2s'
+            }}>❌ ยกเลิกการจอง</button>
+            <button onClick={pay} disabled={saving} style={{
+              flex:2, padding:'14px', border:'none', borderRadius:12,
+              background:'linear-gradient(135deg,var(--accent),#c0392b)', color:'#fff',
+              cursor: saving?'not-allowed':'pointer', fontSize:15, fontWeight:600,
+              fontFamily:'Sarabun,sans-serif', transition:'all 0.2s',
+              opacity: saving?0.7:1, boxShadow: saving?'none':'0 6px 20px rgba(233,69,96,0.35)'
+            }}>{saving ? '⏳ กำลังชำระ...' : '✅ ยืนยันชำระเงิน'}</button>
+          </div>
+
+          {/* Cancel confirm overlay */}
+          {confirmCancel && (
+            <div className="modal-overlay" onClick={()=>setConfirmCancel(false)}>
+              <div className="modal" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
+                <div className="modal-body" style={{textAlign:'center',padding:'32px 28px'}}>
+                  <div style={{fontSize:52,marginBottom:16}}>⚠️</div>
+                  <h3 style={{fontFamily:'Kanit',fontSize:18,marginBottom:10}}>ยืนยันยกเลิกการจอง?</h3>
+                  <p style={{color:'var(--text-muted)',fontSize:14,lineHeight:1.6,marginBottom:24}}>การจอง #{rental.rent_id}<br/>รถ {car?.brand} {car?.model}<br/><strong style={{color:'var(--danger)'}}>จะถูกลบออกจากระบบทันที</strong></p>
+                  <div style={{display:'flex',gap:10}}>
+                    <button onClick={()=>setConfirmCancel(false)} style={{flex:1,padding:'12px',border:'1px solid var(--border)',borderRadius:10,background:'rgba(255,255,255,0.05)',color:'var(--text)',cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontSize:14}}>กลับไปชำระเงิน</button>
+                    <button onClick={cancelRental} disabled={cancelling} style={{flex:1,padding:'12px',border:'none',borderRadius:10,background:'var(--danger)',color:'#fff',cursor:'pointer',fontFamily:'Sarabun,sans-serif',fontSize:14,fontWeight:600,opacity:cancelling?0.6:1}}>{cancelling?'กำลังยกเลิก...':'ยืนยันยกเลิก'}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── PAYMENT SUCCESS PAGE ─────────────────────────
+    function PaymentSuccess({ rental, car, onDone }) {
+      return (
+        <div style={{maxWidth:500,margin:'0 auto',textAlign:'center',animation:'fadeIn 0.5s ease',padding:'20px 0'}}>
+          <div style={{width:90,height:90,background:'linear-gradient(135deg,rgba(46,204,113,0.2),rgba(46,204,113,0.1))',border:'2px solid rgba(46,204,113,0.4)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:42,margin:'0 auto 20px',animation:'slideUp 0.5s ease'}}>✅</div>
+          <h2 style={{fontFamily:'Kanit',fontSize:24,fontWeight:700,marginBottom:8,color:'var(--success)'}}>ชำระเงินสำเร็จ!</h2>
+          <p style={{color:'var(--text-muted)',fontSize:14,marginBottom:28}}>การจองของคุณได้รับการยืนยันแล้ว</p>
+          <div className="card" style={{textAlign:'left',marginBottom:24}}>
+            <div style={{display:'flex',gap:14,alignItems:'center',marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--border)'}}>
+              <div style={{fontSize:36}}>🚗</div>
+              <div>
+                <div style={{fontWeight:600}}>{car?.brand} {car?.model}</div>
+                <div style={{fontSize:13,color:'var(--text-muted)'}}>ทะเบียน: {rental.plate_id}</div>
+              </div>
+            </div>
+            {[['วันเช่า',fmtDate(rental.rent_date)],['กำหนดคืน',fmtDate(rental.return_due_date)],['สถานที่รับรถ',rental.pickup_place],['ยอดชำระ','฿'+fmtMoney(rental.total_price)]].map(([l,v])=>(
+              <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,0.04)',fontSize:14}}>
+                <span style={{color:'var(--text-muted)'}}>{l}</span><span style={{fontWeight:500}}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={onDone} style={{width:'100%',padding:'14px',background:'linear-gradient(135deg,var(--success),#27ae60)',border:'none',borderRadius:12,color:'#fff',fontSize:15,fontWeight:600,cursor:'pointer',fontFamily:'Sarabun,sans-serif'}}>กลับหน้าหลัก</button>
+        </div>
+      );
+    }
+
+    // ─── CUSTOMER: CAR LIST ──────────────────────────
+    function CustomerCars({ toast, user, onNavigate }) {
+      const [cars, setCars] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [selected, setSelected] = useState(null);       // car being booked
+      const [rentModal, setRentModal] = useState(false);
+      const [profile, setProfile] = useState(null);
+      const [form, setForm] = useState({ rent_date:'', return_due_date:'', pickup_place:'' });
+      const [saving, setSaving] = useState(false);
+      const [preview, setPreview] = useState(null);
+      // After booking → go to payment page
+      const [pendingRental, setPendingRental] = useState(null);  // rental object from API
+      const [showPayment, setShowPayment] = useState(false);
+      const [showSuccess, setShowSuccess] = useState(false);
+
+      const loadCars = () => {
+        Promise.all([
+          fetch(`${API}/car`).then(r=>r.json()),
+          apiFetch('/customer/profile').then(r=>r.json())
+        ]).then(([c, p]) => { setCars(c); setProfile(p.data); })
+          .catch(() => toast.error('โหลดข้อมูลไม่สำเร็จ'))
+          .finally(() => setLoading(false));
+      };
+      useEffect(loadCars, []);
+
+      const calcPreview = () => {
+        if (!form.rent_date || !form.return_due_date || !selected) return;
+        const days = Math.ceil((new Date(form.return_due_date)-new Date(form.rent_date))/(1000*60*60*24));
+        if (days <= 0) { setPreview(null); return; }
+        const rental_price = days * Number(selected.price_per_day);
+        const deposit = Number(selected.deposit);
+        setPreview({ days, rental_price, deposit, total: rental_price + deposit });
+      };
+      useEffect(calcPreview, [form.rent_date, form.return_due_date, selected]);
+
+      const openRent = car => {
+        if (!profile) { toast.error('กรุณากรอกข้อมูลส่วนตัวก่อนทำการเช่า'); return; }
+        setSelected(car); setForm({ rent_date:'', return_due_date:'', pickup_place:'' }); setPreview(null); setRentModal(true);
+      };
+
+      // Step 1: Create rental → Step 2: Show PaymentPage
+      const submitRent = async () => {
+        if (!form.rent_date || !form.return_due_date || !form.pickup_place) { toast.error('กรุณากรอกข้อมูลให้ครบ'); return; }
+        if (!preview || preview.days <= 0) { toast.error('วันที่คืนต้องหลังวันเช่า'); return; }
+        setSaving(true);
+        try {
+          const res = await apiFetch('/rental', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ car_id: selected.plate_id, cust_id: profile.cust_id, ...form })
+          });
+          const d = await res.json();
+          if (!res.ok) { toast.error(d.message || 'เกิดข้อผิดพลาด'); return; }
+          // ปิด modal แล้วไปหน้าชำระเงิน
+          setPendingRental(d.rental);
+          setRentModal(false);
+          setShowPayment(true);
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      // Called when payment succeeded
+      const handlePaid = () => {
+        toast.success('ชำระเงินสำเร็จ!');
+        setShowPayment(false);
+        setShowSuccess(true);
+      };
+
+      // Called when user cancels & rental is deleted
+      const handleCancelled = () => {
+        toast.info('ยกเลิกการจองแล้ว');
+        setShowPayment(false);
+        setPendingRental(null);
+        loadCars(); // refresh car status
+      };
+
+      // Done on success page
+      const handleDone = () => {
+        setShowSuccess(false);
+        setPendingRental(null);
+        loadCars();
+      };
+
+      if (loading) return <Loading />;
+
+      // Show payment page (full content swap)
+      if (showPayment && pendingRental) {
+        return <PaymentPage rental={pendingRental} car={selected} onPaid={handlePaid} onCancel={handleCancelled} />;
+      }
+
+      // Show success page
+      if (showSuccess && pendingRental) {
+        return <PaymentSuccess rental={pendingRental} car={selected} onDone={handleDone} />;
+      }
+
+      return (
+        <div>
+          <div style={{marginBottom:20}}>
+            <p style={{color:'var(--text-muted)',fontSize:14}}>รถที่พร้อมให้เช่า {cars.filter(c=>c.car_status==='AVAILABLE').length} คัน</p>
+          </div>
+          <div className="cars-grid">
+            {cars.map(car => (
+              <div key={car.plate_id} className="car-card">
+                <div className="car-img">
+                  {car.car_image
+                    ? <img src={`http://localhost:5000/car_img/${car.car_image}`} alt={car.brand}
+                        onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />
+                    : null}
+                  <span style={{display:car.car_image?'none':'flex',fontSize:60,alignItems:'center',justifyContent:'center',width:'100%',height:'100%'}}>🚘</span>
+                  <div className="car-status-badge">{carStatusBadge(car.car_status)}</div>
+                </div>
+                <div className="car-body">
+                  <div className="car-brand">{car.brand} {car.model}</div>
+                  <div className="car-model">🏷 {car.type?.type_name} · {car.color}</div>
+                  <div className="car-price">฿{fmtMoney(car.price_per_day)}<span>/วัน</span></div>
+                  <div className="car-meta">
+                    <span>💰 มัดจำ ฿{fmtMoney(car.deposit)}</span>
+                    <span>📍 {Number(car.mileage).toLocaleString()} กม.</span>
+                  </div>
+                  {car.detail && <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:12}}>{car.detail}</p>}
+                  {car.car_status==='AVAILABLE'
+                    ? <button className="btn-add" style={{width:'100%'}} onClick={()=>openRent(car)}>🚗 จองรถ</button>
+                    : <button disabled style={{width:'100%',padding:'10px',borderRadius:10,border:'1px solid var(--border)',background:'rgba(255,255,255,0.03)',color:'var(--text-muted)',cursor:'not-allowed',fontFamily:'Sarabun,sans-serif',fontSize:14}}>ไม่ว่าง</button>
+                  }
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Book modal */}
+          {rentModal && selected && (
+            <Modal title={`จองรถ ${selected.brand} ${selected.model}`} onClose={()=>setRentModal(false)} lg
+              footer={<><button className="btn-cancel" onClick={()=>setRentModal(false)}>ยกเลิก</button><button className="btn-submit" onClick={submitRent} disabled={saving}>{saving?'⏳ กำลังจอง...':'➡️ ถัดไป: ชำระเงิน'}</button></>}>
+              <div style={{background:'rgba(0,0,0,0.2)',borderRadius:12,padding:16,marginBottom:20,display:'flex',gap:16,alignItems:'center'}}>
+                <div style={{width:56,height:56,borderRadius:12,background:'var(--card)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,overflow:'hidden',flexShrink:0}}>
+                  {selected.car_image
+                    ? <img src={`http://localhost:5000/car_img/${selected.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
+                    : '🚘'}
+                </div>
+                <div>
+                  <div style={{fontWeight:600}}>{selected.brand} {selected.model}</div>
+                  <div style={{fontSize:13,color:'var(--text-muted)'}}>ทะเบียน: {selected.plate_id} · {selected.color}</div>
+                  <div style={{fontSize:14,color:'var(--accent2)',fontWeight:600,marginTop:4}}>฿{fmtMoney(selected.price_per_day)}/วัน</div>
+                </div>
+              </div>
+
+              {/* Step indicator */}
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:20,padding:'10px 14px',background:'rgba(52,152,219,0.07)',borderRadius:10}}>
+                <span style={{width:22,height:22,borderRadius:'50%',background:'var(--accent)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,flexShrink:0}}>1</span>
+                <span style={{fontSize:13,fontWeight:600}}>กรอกรายละเอียดการจอง</span>
+                <span style={{color:'var(--text-muted)',fontSize:13,margin:'0 4px'}}>→</span>
+                <span style={{width:22,height:22,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:12,color:'var(--text-muted)',flexShrink:0}}>2</span>
+                <span style={{fontSize:13,color:'var(--text-muted)'}}>ชำระเงิน</span>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group"><label>วันที่เช่า *</label><input type="date" className="form-control" value={form.rent_date} onChange={e=>setForm({...form,rent_date:e.target.value})} /></div>
+                <div className="form-group"><label>วันที่คืน *</label><input type="date" className="form-control" value={form.return_due_date} onChange={e=>setForm({...form,return_due_date:e.target.value})} /></div>
+              </div>
+              <div className="form-group">
+                <label>สถานที่รับรถ *</label>
+                <input className="form-control" value={form.pickup_place} onChange={e=>setForm({...form,pickup_place:e.target.value})} placeholder="เช่น HatYai Airport, สนามบิน หาดใหญ่" />
+              </div>
+              {preview && (
+                <div style={{background:'rgba(245,166,35,0.08)',border:'1px solid rgba(245,166,35,0.2)',borderRadius:12,padding:16}}>
+                  <div style={{fontWeight:600,marginBottom:12,color:'var(--accent2)'}}>📊 สรุปค่าใช้จ่าย</div>
+                  {[['จำนวนวัน',`${preview.days} วัน`],['ค่าเช่า',`฿${fmtMoney(preview.rental_price)}`],['มัดจำ',`฿${fmtMoney(preview.deposit)}`]].map(([l,v])=>(
+                    <div key={l} style={{display:'flex',justifyContent:'space-between',fontSize:14,marginBottom:8}}>
+                      <span style={{color:'var(--text-muted)'}}>{l}</span><span>{v}</span>
+                    </div>
+                  ))}
+                  <div style={{borderTop:'1px solid rgba(245,166,35,0.2)',marginTop:8,paddingTop:8,display:'flex',justifyContent:'space-between',fontWeight:700,fontSize:16}}>
+                    <span>รวมทั้งหมด</span><span style={{color:'var(--accent2)'}}>฿{fmtMoney(preview.total)}</span>
+                  </div>
+                </div>
+              )}
+            </Modal>
+          )}
+        </div>
+      );
+    }
+
+    // ─── CUSTOMER: MY RENTALS ────────────────────────
+    function CustomerRentals({ toast }) {
+      const [rentals, setRentals] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [payTarget, setPayTarget] = useState(null);   // rental to pay (shows PaymentPage)
+      const [paySuccess, setPaySuccess] = useState(null); // rental that was just paid
+
+      const load = () => {
+        setLoading(true);
+        apiFetch('/customer/profile').then(r=>r.json())
+          .then(d => setRentals(d.data?.rentals || []))
+          .catch(() => toast.error('โหลดไม่สำเร็จ'))
+          .finally(() => setLoading(false));
+      };
+      useEffect(load, []);
+
+      const handlePaid = () => {
+        toast.success('ชำระเงินสำเร็จ!');
+        setPaySuccess(payTarget);
+        setPayTarget(null);
+        load();
+      };
+
+      const handleCancelled = () => {
+        toast.info('ยกเลิกการจองแล้ว');
+        setPayTarget(null);
+        load();
+      };
+
+      if (loading) return <Loading />;
+
+      // Show payment flow from "My Rentals"
+      if (payTarget) {
+        return <PaymentPage rental={payTarget} car={null} onPaid={handlePaid} onCancel={handleCancelled} />;
+      }
+      if (paySuccess) {
+        return <PaymentSuccess rental={paySuccess} car={null} onDone={()=>{ setPaySuccess(null); load(); }} />;
+      }
+
+      return (
+        <div>
+          {rentals.length === 0
+            ? <div className="empty"><div className="empty-icon">🚗</div><h3>ยังไม่มีการเช่า</h3><p>กดที่เมนู "รถทั้งหมด" เพื่อเริ่มจองรถ</p></div>
+            : <div style={{display:'flex',flexDirection:'column',gap:16}}>
+                {rentals.map(r => (
+                  <div key={r.rent_id} className="card">
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:12}}>
+                      <div>
+                        <div style={{fontFamily:'Kanit',fontSize:17,fontWeight:600}}>การเช่า #{r.rent_id}</div>
+                        <div style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>ทะเบียน: {r.plate_id}</div>
+                      </div>
+                      {rentStatusBadge(r.rent_status)}
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginTop:16}}>
+                      {[['📅 วันเช่า',fmtDate(r.rent_date)],['📅 กำหนดคืน',fmtDate(r.return_due_date)],['📍 รับรถที่',r.pickup_place],['💰 ยอดรวม',`฿${fmtMoney(r.total_price)}`]].map(([l,v])=>(
+                        <div key={l} style={{background:'rgba(0,0,0,0.15)',borderRadius:8,padding:'10px 14px'}}>
+                          <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:4}}>{l}</div>
+                          <div style={{fontWeight:600,fontSize:14}}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {r.rent_status === 'pending' && (
+                      <div style={{display:'flex',gap:10,marginTop:16}}>
+                        <button className="btn-add" style={{flex:2}} onClick={()=>setPayTarget(r)}>💳 ชำระเงิน</button>
+                        <button onClick={async()=>{
+                          if(!confirm('ยืนยันยกเลิกการจองนี้?')) return;
+                          const res = await apiFetch(`/rental/${r.rent_id}`,{method:'DELETE'});
+                          if(res.ok){toast.info('ยกเลิกการจองแล้ว');load();}
+                          else{const d=await res.json();toast.error(d.message||'ยกเลิกไม่สำเร็จ');}
+                        }} style={{flex:1,padding:'10px',border:'1px solid rgba(231,76,60,0.3)',borderRadius:10,background:'rgba(231,76,60,0.08)',color:'var(--danger)',cursor:'pointer',fontSize:14,fontFamily:'Sarabun,sans-serif',fontWeight:500}}>
+                          ❌ ยกเลิก
+                        </button>
+                      </div>
+                    )}
+                    {r.fine > 0 && (
+                      <div style={{marginTop:12,padding:'8px 16px',background:'rgba(231,76,60,0.1)',borderRadius:8,color:'var(--danger)',fontSize:13}}>
+                        ⚠️ ค่าปรับล่าช้า: ฿{r.fine.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+          }
+        </div>
+      );
+    }
+
+    // ─── CUSTOMER: PROFILE ──────────────────────────
+    function CustomerProfile({ toast, user }) {
+      const [profile, setProfile] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [editMode, setEditMode] = useState(false);
+      const [form, setForm] = useState({});
+      const [saving, setSaving] = useState(false);
+      const [noProfile, setNoProfile] = useState(false);
+
+      const load = () => {
+        apiFetch('/customer/profile').then(r=>r.json())
+          .then(d => {
+            if (d.data) { setProfile(d.data); setForm({ cust_fname:d.data.cust_fname, cust_lname:d.data.cust_lname, cust_tel:d.data.cust_tel, license_num:d.data.license_num }); }
+            else setNoProfile(true);
+          })
+          .catch(()=>setNoProfile(true))
+          .finally(()=>setLoading(false));
+      };
+      useEffect(load, []);
+
+      const createProfile = async () => {
+        if (!form.cust_fname||!form.cust_lname||!form.cust_tel||!form.license_num) { toast.error('กรุณากรอกข้อมูลให้ครบ'); return; }
+        setSaving(true);
+        try {
+          const res = await apiFetch('/customer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
+          const d = await res.json();
+          if (!res.ok) { toast.error(d.message||'เกิดข้อผิดพลาด'); return; }
+          toast.success('บันทึกข้อมูลสำเร็จ!'); setNoProfile(false); load();
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      const updateProfile = async () => {
+        setSaving(true);
+        try {
+          const res = await apiFetch('/customer/profile', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) });
+          if (!res.ok) { toast.error('อัปเดตไม่สำเร็จ'); return; }
+          toast.success('อัปเดตข้อมูลสำเร็จ!'); setEditMode(false); load();
+        } catch { toast.error('เกิดข้อผิดพลาด'); }
+        finally { setSaving(false); }
+      };
+
+      if (loading) return <Loading />;
+
+      if (noProfile || !profile) {
+        return (
+          <div>
+            <div className="card">
+              <div style={{textAlign:'center',padding:'20px 0 30px'}}>
+                <div style={{fontSize:60,marginBottom:16}}>👤</div>
+                <h3 style={{fontFamily:'Kanit',fontSize:20,marginBottom:8}}>ยังไม่มีข้อมูลผู้เช่า</h3>
+                <p style={{color:'var(--text-muted)',fontSize:14,marginBottom:24}}>กรอกข้อมูลส่วนตัวเพื่อเริ่มใช้งานการเช่ารถ</p>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label>ชื่อ *</label><input className="form-control" value={form.cust_fname||''} onChange={e=>setForm({...form,cust_fname:e.target.value})} placeholder="ชื่อ" /></div>
+                <div className="form-group"><label>นามสกุล *</label><input className="form-control" value={form.cust_lname||''} onChange={e=>setForm({...form,cust_lname:e.target.value})} placeholder="นามสกุล" /></div>
+              </div>
+              <div className="form-row">
+                <div className="form-group"><label>เบอร์โทรศัพท์ *</label><input className="form-control" value={form.cust_tel||''} onChange={e=>setForm({...form,cust_tel:e.target.value})} placeholder="0xxxxxxxxx" /></div>
+                <div className="form-group"><label>เลขใบขับขี่ *</label><input className="form-control" value={form.license_num||''} onChange={e=>setForm({...form,license_num:e.target.value})} placeholder="เลขใบขับขี่" /></div>
+              </div>
+              <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
+                <button className="btn-submit" onClick={createProfile} disabled={saving}>{saving?'กำลังบันทึก...':'💾 บันทึกข้อมูล'}</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div>
+          <div className="profile-header">
+            <div className="profile-avatar">{profile.cust_fname?.charAt(0).toUpperCase()}</div>
+            <div>
+              <div className="profile-name">{profile.cust_fname} {profile.cust_lname}</div>
+              <div className="profile-email">{user.email}</div>
+              <div style={{marginTop:8,fontSize:13,color:'var(--text-muted)'}}>📋 ประวัติการเช่า {profile.rentals?.length||0} ครั้ง</div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div className="card-title" style={{margin:0}}>ข้อมูลส่วนตัว</div>
+              {!editMode && <button className="btn-sm btn-edit" onClick={()=>setEditMode(true)}>✏ แก้ไข</button>}
+            </div>
+            {editMode ? (
+              <>
+                <div className="form-row">
+                  <div className="form-group"><label>ชื่อ</label><input className="form-control" value={form.cust_fname} onChange={e=>setForm({...form,cust_fname:e.target.value})} /></div>
+                  <div className="form-group"><label>นามสกุล</label><input className="form-control" value={form.cust_lname} onChange={e=>setForm({...form,cust_lname:e.target.value})} /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>เบอร์โทร</label><input className="form-control" value={form.cust_tel} onChange={e=>setForm({...form,cust_tel:e.target.value})} /></div>
+                  <div className="form-group"><label>เลขใบขับขี่</label><input className="form-control" value={form.license_num} onChange={e=>setForm({...form,license_num:e.target.value})} /></div>
+                </div>
+                <div style={{display:'flex',justifyContent:'flex-end',gap:12}}>
+                  <button className="btn-cancel" onClick={()=>setEditMode(false)}>ยกเลิก</button>
+                  <button className="btn-submit" onClick={updateProfile} disabled={saving}>{saving?'กำลังบันทึก...':'💾 บันทึก'}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {[['ชื่อ',profile.cust_fname],['นามสกุล',profile.cust_lname],['เบอร์โทร',profile.cust_tel],['เลขใบขับขี่',profile.license_num],['อีเมล',user.email],['สมัครวันที่',fmtDate(profile.create_at)]].map(([l,v])=>(
+                  <div key={l} className="detail-row"><span className="detail-label">{l}</span><span className="detail-value">{v}</span></div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── ADMIN LAYOUT ────────────────────────────────
+    const adminMenus = [
+      { key:'dashboard', icon:'📊', label:'Dashboard' },
+      { key:'cars', icon:'🚗', label:'จัดการรถ' },
+      { key:'car_types', icon:'🏷', label:'ประเภทรถ' },
+      { key:'customers', icon:'👥', label:'ลูกค้า' },
+      { key:'rentals', icon:'📋', label:'การเช่า' },
+      { key:'payments', icon:'💳', label:'การชำระเงิน' },
+    ];
+
+    function AdminApp({ user, onLogout, toast }) {
+      const [page, setPage] = useState('dashboard');
+      const pages = { dashboard: 'Dashboard', cars: 'จัดการรถยนต์', car_types: 'ประเภทรถ', customers: 'ลูกค้า', rentals: 'การเช่า', payments: 'การชำระเงิน' };
+
+      return (
+        <div className="app-layout">
+          <aside className="sidebar">
+            <div className="sidebar-logo">
+              <div className="logo-box">🚗</div>
+              <span>RentCar <small style={{fontSize:10,color:'var(--accent)'}}>ADMIN</small></span>
+            </div>
+            <nav className="sidebar-menu">
+              <div className="menu-section">
+                <div className="menu-section-title">เมนูหลัก</div>
+                {adminMenus.map(m => (
+                  <div key={m.key} className={`menu-item${page===m.key?' active':''}`} onClick={()=>setPage(m.key)}>
+                    <span className="menu-icon">{m.icon}</span>{m.label}
+                  </div>
+                ))}
+              </div>
+            </nav>
+            <div className="sidebar-footer">
+              <div className="user-info">
+                <div className="user-avatar">{user.email?.charAt(0).toUpperCase()}</div>
+                <div><div style={{fontSize:13,fontWeight:500}}>{user.email?.split('@')[0]}</div><div className="user-role">Admin</div></div>
+              </div>
+              <button className="btn-logout" onClick={onLogout}>🚪 ออกจากระบบ</button>
+            </div>
+          </aside>
+          <main className="main-content">
+            <div className="topbar">
+              <div><div className="page-title">{pages[page]}</div><div className="page-subtitle">ระบบจัดการเช่ารถยนต์</div></div>
+            </div>
+            <div className="page-body">
+              {page==='dashboard' && <AdminDashboard toast={toast} />}
+              {page==='cars' && <AdminCars toast={toast} />}
+              {page==='car_types' && <AdminCarTypes toast={toast} />}
+              {page==='customers' && <AdminCustomers toast={toast} />}
+              {page==='rentals' && <AdminRentals toast={toast} />}
+              {page==='payments' && <AdminPayments toast={toast} />}
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // ─── CUSTOMER LAYOUT ─────────────────────────────
+    const customerMenus = [
+      { key:'cars', icon:'🚗', label:'รถทั้งหมด' },
+      { key:'rentals', icon:'📋', label:'การเช่าของฉัน' },
+      { key:'profile', icon:'👤', label:'ข้อมูลส่วนตัว' },
+    ];
+
+    function CustomerApp({ user, onLogout, toast }) {
+      const [page, setPage] = useState('cars');
+      const pages = { cars: 'รถทั้งหมด', rentals: 'การเช่าของฉัน', profile: 'ข้อมูลส่วนตัว' };
+
+      return (
+        <div className="app-layout">
+          <aside className="sidebar">
+            <div className="sidebar-logo">
+              <div className="logo-box">🚗</div>
+              <span>RentCar</span>
+            </div>
+            <nav className="sidebar-menu">
+              <div className="menu-section">
+                <div className="menu-section-title">เมนู</div>
+                {customerMenus.map(m => (
+                  <div key={m.key} className={`menu-item${page===m.key?' active':''}`} onClick={()=>setPage(m.key)}>
+                    <span className="menu-icon">{m.icon}</span>{m.label}
+                  </div>
+                ))}
+              </div>
+            </nav>
+            <div className="sidebar-footer">
+              <div className="user-info">
+                <div className="user-avatar">{user.email?.charAt(0).toUpperCase()}</div>
+                <div><div style={{fontSize:13,fontWeight:500}}>{user.email?.split('@')[0]}</div><div className="user-role">Customer</div></div>
+              </div>
+              <button className="btn-logout" onClick={onLogout}>🚪 ออกจากระบบ</button>
+            </div>
+          </aside>
+          <main className="main-content">
+            <div className="topbar">
+              <div><div className="page-title">{pages[page]}</div><div className="page-subtitle">ยินดีต้อนรับ, {user.email}</div></div>
+            </div>
+            <div className="page-body">
+              {page==='cars' && <CustomerCars toast={toast} user={user} />}
+              {page==='rentals' && <CustomerRentals toast={toast} />}
+              {page==='profile' && <CustomerProfile toast={toast} user={user} />}
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // ─── ROOT ─────────────────────────────────────────
+    function App() {
+      const [user, setUser] = useState(null);
+      const toast = useToast();
+
+      useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) { const p = parseJwt(token); if (p) setUser(p); }
+      }, []);
+
+      const handleLogin = token => {
+        const p = parseJwt(token);
+        setUser(p);
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('token');
+        setUser(null);
+        toast.info('ออกจากระบบแล้ว');
+      };
+
+      return (
+        <>
+          <ToastContainer toasts={toast.toasts} />
+          {!user ? <AuthPage onLogin={handleLogin} /> :
+            user.role === 'admin' ?
+              <AdminApp user={user} onLogout={handleLogout} toast={toast} /> :
+              <CustomerApp user={user} onLogout={handleLogout} toast={toast} />
+          }
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
