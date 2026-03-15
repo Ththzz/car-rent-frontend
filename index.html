@@ -370,7 +370,8 @@
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
 
-    const API = 'http://localhost:5000/api';
+    const API = "https://car-rent-backend-e2pv.onrender.com/api"
+    const IMG = "https://car-rent-backend-e2pv.onrender.com/car_img/"
 
     // ─── TOAST ───────────────────────────────────────
     function useToast() {
@@ -615,7 +616,7 @@
 
       // รูปรถ: ถ้ามี preview ใช้ preview, ถ้าไม่มีใช้จาก server
       const carImgSrc = (car_image) =>
-        car_image ? `http://localhost:5000/car_img/${car_image}` : null;
+        car_image ? `${IMG}/car_img/${car.car_image}` : null;
 
       const save = async () => {
         setSaving(true);
@@ -1238,7 +1239,7 @@
             <div style={{display:'flex',gap:16,alignItems:'center',marginBottom:16,paddingBottom:16,borderBottom:'1px solid var(--border)'}}>
               <div style={{width:64,height:64,borderRadius:12,background:'linear-gradient(135deg,var(--card),var(--secondary))',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,flexShrink:0,overflow:'hidden'}}>
                 {car?.car_image
-                  ? <img src={`http://localhost:5000/car_img/${car.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
+                  ? <img src={`${IMG}/car_img/${car.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
                   : '🚘'}
               </div>
               <div style={{flex:1}}>
@@ -1465,7 +1466,7 @@
               <div key={car.plate_id} className="car-card">
                 <div className="car-img">
                   {car.car_image
-                    ? <img src={`http://localhost:5000/car_img/${car.car_image}`} alt={car.brand}
+                    ? <img src={`${IMG}/car_img/${car.car_image}`} alt={car.brand}
                         onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} />
                     : null}
                   <span style={{display:car.car_image?'none':'flex',fontSize:60,alignItems:'center',justifyContent:'center',width:'100%',height:'100%'}}>🚘</span>
@@ -1496,7 +1497,7 @@
               <div style={{background:'rgba(0,0,0,0.2)',borderRadius:12,padding:16,marginBottom:20,display:'flex',gap:16,alignItems:'center'}}>
                 <div style={{width:56,height:56,borderRadius:12,background:'var(--card)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,overflow:'hidden',flexShrink:0}}>
                   {selected.car_image
-                    ? <img src={`http://localhost:5000/car_img/${selected.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
+                    ? <img src={`${IMG}/car_img/${selected.car_image}`} style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>{e.target.style.display='none';}} alt="" />
                     : '🚘'}
                 </div>
                 <div>
