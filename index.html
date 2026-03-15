@@ -1489,7 +1489,12 @@
                     <span>📍 {Number(car.mileage).toLocaleString()} กม.</span>
                   </div>
                   {car.detail && <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:12}}>{car.detail}</p>}
-                  <button onClick={()=>openRent(car)}>🚗 จองรถ</button>
+                  <button
+                      className="btn-book"
+                      onClick={()=>openRent(car)}
+                    >
+                      🚗 จองรถ
+                    </button>
                 </div>
               </div>
             ))}
