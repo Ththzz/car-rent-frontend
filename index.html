@@ -1489,10 +1489,7 @@
                     <span>📍 {Number(car.mileage).toLocaleString()} กม.</span>
                   </div>
                   {car.detail && <p style={{fontSize:12,color:'var(--text-muted)',marginBottom:12}}>{car.detail}</p>}
-                  {car.car_status==='AVAILABLE'
-                    ? <button className="btn-add" style={{width:'100%'}} onClick={()=>openRent(car)}>🚗 จองรถ</button>
-                    : <button disabled style={{width:'100%',padding:'10px',borderRadius:10,border:'1px solid var(--border)',background:'rgba(255,255,255,0.03)',color:'var(--text-muted)',cursor:'not-allowed',fontFamily:'Sarabun,sans-serif',fontSize:14}}>ไม่ว่าง</button>
-                  }
+                  <button onClick={()=>openRent(car)}>🚗 จองรถ</button>
                 </div>
               </div>
             ))}
